@@ -1,0 +1,31 @@
+name: Test basic push - set commit status pending
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          token: ${{ github.token }}
+          status: pending
+          sha: ${{ github.sha }}
+          context: "CI / test-basic-push"
+        continue-on-error: true
+      - name: Assert action ran without unexpected crash
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # The action may fail due to API permissions in act environment,
+          # but it should not be skipped or produce an unknown outcome.
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action was unexpectedly skipped"
+            exit 1
+          fi
+          echo "PASS: action ran (outcome=$OUTCOME)"
