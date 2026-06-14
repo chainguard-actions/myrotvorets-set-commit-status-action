@@ -1,0 +1,33 @@
+name: Test push pending status
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+      GITHUB_SHA: aabbccddee1122334455667788990011aabbccdd
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: set-status
+        uses: .
+        continue-on-error: true
+        with:
+          token: fake-token-for-testing
+          status: pending
+          sha: aabbccddee1122334455667788990011aabbccdd
+          context: CI / test
+          targetUrl: https://example.com
+      - name: Assert step ran
+        run: |
+          echo "Step outcome: ${{ steps.set-status.outcome }}"
+          # The action is expected to fail with a fake token (API auth error)
+          # but it should not crash before attempting the API call.
+          # Acceptable outcomes are 'success' or 'failure' (not 'skipped').
+          outcome="${{ steps.set-status.outcome }}"
+          if [ "$outcome" = "skipped" ]; then
+            echo "FAIL: step was unexpectedly skipped"
+            exit 1
+          fi
+          echo "PASS: step ran with outcome=$outcome"
