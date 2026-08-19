@@ -1,4 +1,4 @@
-name: Test push event with pending status
+name: Test default inputs
 on:
   workflow_dispatch:
 jobs:
@@ -11,27 +11,23 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - id: action
-        name: Run action with pending status on push event
+        name: Run action with default inputs (status=pending)
         uses: .
         with:
           token: fake-token-for-testing
-          status: pending
           sha: "abc1234567890abcdef1234567890abcdef12345"
           repo: "test-org/test-repo"
-          description: "Build is pending"
-          context: "CI / test"
-          targetUrl: "https://example.com/build/1"
         continue-on-error: true
 
-      - name: Assert action ran without crashing
+      - name: Assert action ran with defaults without crashing
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
-          # With a fake token the API call will fail (401/403),
-          # but the action should fail gracefully, not crash with an unhandled exception
+          # Default status is 'pending'. With a fake token the API call will fail,
+          # but the action should exit cleanly (not crash with unhandled exception).
           if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action ran and exited cleanly (outcome=$OUTCOME)"
+            echo "PASS: action ran with default inputs and exited cleanly (outcome=$OUTCOME)"
           else
             echo "FAIL: unexpected outcome: $OUTCOME"
             exit 1

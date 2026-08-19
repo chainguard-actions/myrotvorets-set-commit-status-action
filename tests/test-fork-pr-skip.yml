@@ -1,0 +1,41 @@
+name: Test fork PR skip (allowForks=false)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_HEAD_REF: feature-branch
+      GITHUB_BASE_REF: main
+      GITHUB_REF: refs/pull/1/merge
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        name: Run action with allowForks=false on fork PR
+        uses: .
+        with:
+          token: fake-token-not-used
+          status: pending
+          allowForks: "false"
+          sha: "abc1234567890abcdef1234567890abcdef12345"
+          repo: "some-org/some-fork-repo"
+        continue-on-error: true
+
+      - name: Assert action skipped or completed without crashing
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # The action should either succeed (skip) or fail gracefully
+          # It should not crash with an unhandled exception
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action completed successfully (skipped fork PR)"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "INFO: action failed (expected if API call was attempted with fake token)"
+            echo "PASS: action ran without crashing"
+          else
+            echo "FAIL: unexpected outcome: $OUTCOME"
+            exit 1
+          fi

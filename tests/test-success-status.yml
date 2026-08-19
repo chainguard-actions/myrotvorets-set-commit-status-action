@@ -1,4 +1,4 @@
-name: Test push event with pending status
+name: Test success status
 on:
   workflow_dispatch:
 jobs:
@@ -11,16 +11,15 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - id: action
-        name: Run action with pending status on push event
+        name: Run action with success status
         uses: .
         with:
           token: fake-token-for-testing
-          status: pending
+          status: success
           sha: "abc1234567890abcdef1234567890abcdef12345"
           repo: "test-org/test-repo"
-          description: "Build is pending"
-          context: "CI / test"
-          targetUrl: "https://example.com/build/1"
+          description: "Build succeeded"
+          context: "CI / build"
         continue-on-error: true
 
       - name: Assert action ran without crashing
@@ -29,9 +28,9 @@ jobs:
         run: |
           echo "outcome: $OUTCOME"
           # With a fake token the API call will fail (401/403),
-          # but the action should fail gracefully, not crash with an unhandled exception
+          # but the action should fail gracefully, not crash with an unhandled exception.
           if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action ran and exited cleanly (outcome=$OUTCOME)"
+            echo "PASS: action ran with success status and exited cleanly (outcome=$OUTCOME)"
           else
             echo "FAIL: unexpected outcome: $OUTCOME"
             exit 1
